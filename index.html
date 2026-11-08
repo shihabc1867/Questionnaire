@@ -111,7 +111,7 @@ button.ic:disabled{opacity:.3}
 const API = 'https://script.google.com/macros/s/AKfycbxX17--tEHhOgkSq_Z0XyvnXhHFvUJ8SgNRkMj6se58ay2d1LCoig2shRfhvdgraZ7J/exec';
 
 const $ = id => document.getElementById(id);
-let token = localStorage.getItem('qtoken') || '', me = null, tree = null, openFolder = null, openTopic = null;
+let token = localStorage.getItem('qtoken') || '', me = null, tree = null, openFolder = null, openTopic = null, sec = 1;
 const isAdmin = () => me && me.role === 'admin';
 
 async function call(action, data = {}) {
@@ -210,9 +210,13 @@ function renderLib() {
   if (openTopic) return renderTopic();
   const v = $('view'); v.innerHTML = '';
   if (!openFolder) {
-    v.appendChild(el('<h2>Folders</h2>'));
-    tree.folders.forEach(f => v.appendChild(item('folder', f, tree.folders, { onOpen: () => { openFolder = f.id; renderLib(); } })));
-    if (isAdmin()) v.appendChild(addBtn('Add folder', 'folder', {}));
+    const tabs = el(`<div class="nav"><button class="${sec === 1 ? 'on' : ''}">Section 1</button><button class="${sec === 2 ? 'on' : ''}">Section 2</button></div>`);
+    tabs.children[0].onclick = () => { sec = 1; renderLib(); }; tabs.children[1].onclick = () => { sec = 2; renderLib(); };
+    v.appendChild(tabs); v.appendChild(el('<h2>Folders</h2>'));
+    const fs = tree.folders.filter(f => (Number(f.section) || 1) === sec);
+    fs.forEach(f => v.appendChild(item('folder', f, fs, { onOpen: () => { openFolder = f.id; renderLib(); } })));
+    if (!fs.length) v.appendChild(el('<div class="empty">No folders in this section yet</div>'));
+    if (isAdmin()) v.appendChild(addBtn('Add folder', 'folder', { section: sec }));
     return;
   }
   const f = byId(tree.folders, openFolder), def = f.isDefault === true || f.isDefault === 'TRUE';
@@ -255,6 +259,7 @@ async function renderMake() {
   const v = $('view'); v.innerHTML = '<div class="empty">Loading…</div>';
   try { tree = await call('tree'); } catch (e) { v.innerHTML = ''; return alert(e.message); }
   v.innerHTML = `<div class="card"><h2>Find questions</h2>
+    <label>Section</label><select id="sS"><option value="1">Section 1</option><option value="2">Section 2</option></select>
     <label>Subject</label><select id="sF"></select>
     <label>Chapter</label><select id="sC"></select>
     <label>Topic</label><select id="sT"></select>
@@ -269,8 +274,9 @@ async function renderMake() {
     const chs = tree.chapters.filter(c => c.folderId === $('sF').value);
     fill('sC', chs, 'All chapters'); $('sC').disabled = !chs.length; fillT();
   };
-  fill('sF', tree.folders); fillC();
-  $('sF').onchange = fillC; $('sC').onchange = fillT;
+  const fillF = () => { sec = +$('sS').value; fill('sF', tree.folders.filter(f => (Number(f.section) || 1) === sec)); fillC(); };
+  $('sS').value = String(sec); fillF();
+  $('sS').onchange = fillF; $('sF').onchange = fillC; $('sC').onchange = fillT;
   $('bFind').onclick = () => run($('bFind'), $('mMsg'), async () => {
     found = await call('qSearch', { folderId: $('sF').value, chapterId: $('sC').value, topicId: $('sT').value });
     renderFound();
@@ -596,7 +602,7 @@ function renderProfile() {
   ${isAdmin() ? `<div class="card"><h2>Admin: secret codes</h2>
     <label>How many codes?</label><input id="cCount" type="number" min="1" max="100" value="5">
     <button id="bCodes">Generate codes</button><div id="codeList"></div><div class="msg" id="cMsg"></div></div>
-  <div class="card"><h2>Who can add questions</h2><div id="userList"></div></div>` : ''}
+  <div class="card"><h2>Users</h2><div id="userList"></div></div>` : ''}
   <button class="ghost" id="bOut">Log out</button>`;
   $('bPic').onclick = () => $('file').click();
   $('file').onchange = e => {
@@ -635,7 +641,14 @@ async function loadUsers() {
     const d = el(`<div class="row"><div>${esc(u.name)}<br><small>${esc(u.mobile)}</small></div></div>`);
     const b = el(`<button class="ghost">${u.canAdd ? 'Remove access' : 'Allow'}</button>`);
     b.onclick = act(async () => { await call('setPermission', { mobile: u.mobile, canAdd: !u.canAdd }); loadUsers(); });
-    d.appendChild(b); box.appendChild(d);
+    const r = el('<button class="ghost">Reset password</button>');
+    r.onclick = act(async () => {
+      if (!confirm(`Reset password for ${u.name}?`)) return;
+      const x = await call('resetPassword', { mobile: u.mobile });
+      prompt('New password (copy it and send it to the user):', x.password);
+    });
+    const g = el('<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"></div>');
+    g.append(b, r); d.appendChild(g); box.appendChild(d);
   });
 }
 
