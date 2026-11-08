@@ -19,7 +19,16 @@ h1{font-size:26px;margin:6px 0 2px}h2{font-size:20px;margin:0 0 10px}
 .box b{flex:1;font-weight:600;word-break:break-word}
 .indent{margin-left:14px}
 label{display:block;font-weight:600;margin:10px 0 4px}
-input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+input,textarea,select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+textarea{resize:vertical}textarea:focus,select:focus{outline:2px solid var(--brand);outline-offset:1px}
+.stim{background:var(--bg);border-left:3px solid var(--line);padding:8px 10px;margin-bottom:8px;white-space:pre-wrap}
+.qt{white-space:pre-wrap;font-weight:600}
+.opt{padding:3px 0 3px 4px;white-space:pre-wrap}.opt.right{color:var(--brand);font-weight:600}
+.qimg{max-width:100%;border-radius:8px;margin:8px 0;display:block}
+.tools{display:flex;gap:6px;justify-content:flex-end;margin-top:10px}
+.pal{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
+.pal button{width:36px;height:36px;padding:0;margin:0;background:var(--bg);color:var(--ink);border:1px solid var(--line)}
+pre.cred{white-space:pre-wrap;font:inherit}
 input:focus,button:focus-visible{outline:2px solid var(--brand);outline-offset:1px}
 button{font:inherit;font-weight:600;border:0;border-radius:8px;padding:10px 14px;background:var(--brand);color:var(--on);cursor:pointer;width:100%;margin-top:12px}
 button.ghost{background:transparent;color:var(--brand);border:1px solid var(--line)}
@@ -70,7 +79,7 @@ button.ic:disabled{opacity:.3}
 const API = 'https://script.google.com/macros/s/AKfycbxX17--tEHhOgkSq_Z0XyvnXhHFvUJ8SgNRkMj6se58ay2d1LCoig2shRfhvdgraZ7J/exec';
 
 const $ = id => document.getElementById(id);
-let token = localStorage.getItem('qtoken') || '', me = null, tree = null, openFolder = null;
+let token = localStorage.getItem('qtoken') || '', me = null, tree = null, openFolder = null, openTopic = null;
 const isAdmin = () => me && me.role === 'admin';
 
 async function call(action, data = {}) {
@@ -111,7 +120,7 @@ function start(p) {
 /* ---------- Navigation ---------- */
 function go(tab) {
   $('nLib').classList.toggle('on', tab === 'lib'); $('nPro').classList.toggle('on', tab === 'pro');
-  if (tab === 'lib') { openFolder = null; loadLib(); } else renderProfile();
+  if (tab === 'lib') { openFolder = null; openTopic = null; loadLib(); } else renderProfile();
 }
 $('nLib').onclick = () => go('lib'); $('nPro').onclick = () => go('pro');
 
@@ -160,9 +169,10 @@ function addBtn(label, type, extra) {
   return b;
 }
 function topicItem(t, sibs) {
-  return item('topic', t, sibs, { sm: true, onOpen: () => alert('Questions will be added in the next step.') });
+  return item('topic', t, sibs, { sm: true, onOpen: () => { openTopic = t; renderLib(); } });
 }
 function renderLib() {
+  if (openTopic) return renderTopic();
   const v = $('view'); v.innerHTML = '';
   if (!openFolder) {
     v.appendChild(el('<h2>Folders</h2>'));
@@ -192,6 +202,168 @@ function renderLib() {
   ts.forEach(t => v.appendChild(topicItem(t, ts)));
   if (!ts.length) v.appendChild(el('<div class="empty">No topics yet</div>'));
   if (isAdmin()) v.appendChild(addBtn('Add topic', 'topic', { folderId: f.id, chapterId: '' }));
+}
+
+/* ---------- Questions ---------- */
+const canWrite = () => isAdmin() || me.canAdd;
+const canEditQ = q => isAdmin() || (me.canAdd && q.createdBy === me.mobile);
+const OPTL = 'ABCD';
+const SYMS = ['√','π','²','³','½','¼','°','∠','△','⊥','∥','≤','≥','≠','≈','×','÷','±','∞','∴','∵','∈','∪','∩','⊂','α','β','θ','Δ','Σ','→','⁻¹'];
+const LET = { a: 0, b: 1, c: 2, d: 3, 'ক': 0, 'খ': 1, 'গ': 2, 'ঘ': 3 };
+let qs = [];
+
+async function renderTopic() {
+  const v = $('view'); v.innerHTML = '<div class="empty">Loading…</div>';
+  try { qs = await call('qList', { topicId: openTopic.id }); }
+  catch (e) { alert(e.message); openTopic = null; return renderLib(); }
+  v.innerHTML = '';
+  const back = el('<button class="ghost" style="margin:0 0 12px">← Back</button>');
+  back.onclick = () => { openTopic = null; renderLib(); };
+  v.appendChild(back);
+  v.appendChild(el(`<h2>${esc(openTopic.name)}</h2>`));
+  v.appendChild(el(`<p class="sub">${qs.length} question${qs.length === 1 ? '' : 's'}</p>`));
+  qs.forEach((q, i) => {
+    const c = el(`<div class="card">${q.stimulus ? `<div class="stim">${esc(q.stimulus)}</div>` : ''}
+      <div class="qt">${i + 1}. ${esc(q.text)}</div>${q.image ? `<img class="qimg" src="${esc(q.image)}" alt="">` : ''}
+      ${q.options.map((o, k) => `<div class="opt ${k === q.answer ? 'right' : ''}">${OPTL[k]}) ${esc(o)}${k === q.answer ? ' ✓' : ''}</div>`).join('')}
+      ${q.explanation ? `<div class="empty">${esc(q.explanation)}</div>` : ''}</div>`);
+    if (canEditQ(q) || isAdmin()) {
+      const t = el('<div class="tools"></div>');
+      const mk = (s, label, fn, dis) => {
+        const b = el(`<button class="ic" aria-label="${label}" ${dis ? 'disabled' : ''}>${s}</button>`);
+        b.onclick = act(fn); t.appendChild(b);
+      };
+      if (isAdmin()) {
+        mk('▲', 'Move up', () => moveQ(i, -1), i === 0);
+        mk('▼', 'Move down', () => moveQ(i, 1), i === qs.length - 1);
+      }
+      if (canEditQ(q)) {
+        mk('✎', 'Edit', async () => renderForm(q));
+        mk('✕', 'Delete', async () => {
+          if (!confirm('Delete this question?')) return;
+          await call('qRemove', { id: q.id }); renderTopic();
+        });
+      }
+      c.appendChild(t);
+    }
+    v.appendChild(c);
+  });
+  if (!qs.length) v.appendChild(el('<div class="empty">No questions yet</div>'));
+  if (canWrite()) {
+    const a = el('<button>+ Add question</button>'); a.onclick = () => renderForm(null);
+    const b = el('<button class="ghost">+ Paste many questions</button>'); b.onclick = renderBulk;
+    v.appendChild(a); v.appendChild(b);
+  }
+}
+async function moveQ(i, d) {
+  const ids = qs.map(q => q.id), j = i + d;
+  [ids[i], ids[j]] = [ids[j], ids[i]];
+  await call('qReorder', { ids }); renderTopic();
+}
+
+function renderForm(q) {
+  let img = q ? q.image : '', last = null;
+  const o = q ? q.options : ['', '', '', ''];
+  $('view').innerHTML = `<h2>${q ? 'Edit question' : 'Add question'}</h2><div class="card">
+    <label>Stimulus (optional)</label><textarea id="fSt" rows="3">${esc(q ? q.stimulus : '')}</textarea>
+    <label>Question</label><textarea id="fTx" rows="3">${esc(q ? q.text : '')}</textarea>
+    <label>Image (optional)</label><img id="fImg" class="qimg ${img ? '' : 'hide'}" src="${esc(img)}" alt="">
+    <input id="fFile" type="file" accept="image/*" class="hide">
+    <button class="ghost" id="bImg">${img ? 'Change image' : 'Add image'}</button>
+    <button class="ghost ${img ? '' : 'hide'}" id="bImgX">Remove image</button>
+    <label>Options</label>
+    ${[0, 1, 2, 3].map(k => `<input id="fO${k}" placeholder="Option ${OPTL[k]}" value="${esc(o[k] || '')}" style="margin-bottom:6px">`).join('')}
+    <label>Correct answer</label>
+    <select id="fAn">${[0, 1, 2, 3].map(k => `<option value="${k}" ${q && q.answer === k ? 'selected' : ''}>${OPTL[k]}</option>`).join('')}</select>
+    <label>Explanation (optional)</label><textarea id="fEx" rows="2">${esc(q ? q.explanation : '')}</textarea>
+    <label>Math symbols (tap to insert)</label><div class="pal" id="pal"></div>
+    <button id="bQSave">Save question</button><button class="ghost" id="bQCancel">Cancel</button>
+    <div class="msg" id="fMsg"></div></div>`;
+  ['fSt', 'fTx', 'fO0', 'fO1', 'fO2', 'fO3', 'fEx'].forEach(id => $(id).onfocus = () => last = $(id));
+  SYMS.forEach(s => {
+    const b = el(`<button type="button">${s}</button>`);
+    b.onmousedown = e => e.preventDefault();
+    b.onclick = () => {
+      const f = last || $('fTx'), a = f.selectionStart ?? f.value.length, z = f.selectionEnd ?? a;
+      f.value = f.value.slice(0, a) + s + f.value.slice(z); f.focus(); f.selectionStart = f.selectionEnd = a + s.length;
+    };
+    $('pal').appendChild(b);
+  });
+  const showImg = () => {
+    $('fImg').src = img; $('fImg').classList.toggle('hide', !img);
+    $('bImgX').classList.toggle('hide', !img); $('bImg').textContent = img ? 'Change image' : 'Add image';
+  };
+  $('bImg').onclick = () => $('fFile').click();
+  $('bImgX').onclick = () => { img = ''; showImg(); };
+  $('fFile').onchange = e => {
+    const f = e.target.files[0]; if (!f) return;
+    const im = new Image();
+    im.onload = () => {
+      for (const w of [520, 420, 320, 240]) {  // shrink until it fits in a sheet cell
+        const s = Math.min(1, w / Math.max(im.width, im.height)), c = document.createElement('canvas');
+        c.width = Math.round(im.width * s); c.height = Math.round(im.height * s);
+        const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0, c.width, c.height);
+        img = c.toDataURL('image/jpeg', 0.6); if (img.length < 44000) break;
+      }
+      showImg();
+    };
+    im.src = URL.createObjectURL(f);
+  };
+  $('bQCancel').onclick = renderTopic;
+  $('bQSave').onclick = () => run($('bQSave'), $('fMsg'), async () => {
+    const raw = [0, 1, 2, 3].map(k => $('fO' + k).value.trim()); let ans = +$('fAn').value;
+    if (!raw[ans]) throw new Error('The correct answer option is empty');
+    const options = raw.filter(Boolean); ans = raw.slice(0, ans).filter(Boolean).length;
+    const item = { stimulus: $('fSt').value, text: $('fTx').value, options, answer: ans, explanation: $('fEx').value, image: img };
+    if (q) await call('qUpdate', { id: q.id, q: item }); else await call('qAdd', { topicId: openTopic.id, items: [item] });
+    renderTopic();
+  });
+}
+
+function renderBulk() {
+  $('view').innerHTML = `<h2>Paste many questions</h2><div class="card">
+    <p class="sub">Separate questions with a blank line. Example:</p>
+    <pre class="cred">1. Capital of Bangladesh?
+a) Chattogram
+b) Dhaka
+c) Khulna
+d) Sylhet
+Answer: b</pre>
+    <p class="sub">Optional lines: <b>Stimulus:</b> … and <b>Explanation:</b> … Labels a–d (or ক–ঘ) and "Ans:" (or "উত্তর:") also work.</p>
+    <textarea id="bTx" rows="12"></textarea>
+    <button id="bBSave">Save questions</button><button class="ghost" id="bBCancel">Cancel</button>
+    <div class="msg" id="bMsg"></div></div>`;
+  $('bBCancel').onclick = renderTopic;
+  $('bBSave').onclick = () => run($('bBSave'), $('bMsg'), async () => {
+    const { items, errs } = parseBulk($('bTx').value);
+    if (!items.length) throw new Error(errs[0] || 'No questions found');
+    if (errs.length && !confirm(`${errs.length} problem(s):\n${errs.slice(0, 5).join('\n')}\n\nSave the other ${items.length} questions anyway?`)) return;
+    await call('qAdd', { topicId: openTopic.id, items }); renderTopic();
+  });
+}
+function parseBulk(txt) {
+  const items = [], errs = [];
+  txt.replace(/\r/g, '').split(/\n\s*\n/).map(s => s.trim()).filter(Boolean).forEach((blk, bi) => {
+    const q = { stimulus: '', text: '', options: [], answer: -1, explanation: '', image: '' };
+    const ql = [], st = []; let cur = null, m;
+    blk.split('\n').forEach(raw => {
+      const line = raw.trim(); if (!line) return;
+      if ((m = line.match(/^(?:answer|ans|উত্তর)\s*[:.\-–]?\s*\(?([a-dA-Dকখগঘ])\)?\s*$/i))) { q.answer = LET[m[1].toLowerCase()]; cur = null; }
+      else if ((m = line.match(/^(?:explanation|exp|ব্যাখ্যা)\s*[:\-–]\s*(.*)/i))) { q.explanation = m[1]; cur = 'exp'; }
+      else if ((m = line.match(/^(?:stimulus|passage|উদ্দীপক)\s*[:\-–]\s*(.*)/i))) { st.push(m[1]); cur = 'st'; }
+      else if ((m = line.match(/^\(?([a-dA-Dকখগঘ])[).]\s+(.+)/))) { q.options.push(m[2]); cur = 'opt'; }
+      else if (cur === 'opt') q.options[q.options.length - 1] += ' ' + line;
+      else if (cur === 'exp') q.explanation += ' ' + line;
+      else if (cur === 'st') st.push(line);
+      else ql.push(line);
+    });
+    q.stimulus = st.join('\n');
+    q.text = ql.join(' ').replace(/^\s*[\d০-৯]+\s*[.)\-]\s*/, '');
+    const bad = !q.text ? 'question text is missing' : q.options.length < 2 ? 'needs at least 2 options'
+      : q.answer < 0 || q.answer >= q.options.length ? 'answer is missing or invalid' : '';
+    if (bad) errs.push(`Question ${bi + 1}: ${bad}`); else items.push(q);
+  });
+  return { items, errs };
 }
 
 /* ---------- Profile ---------- */
