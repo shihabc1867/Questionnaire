@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Questionnaire</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f5c5a">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Questionnaire">
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f7f4;--card:#fff;--ink:#1d2a2e;--mute:#68777b;--line:#d9dfdc;--brand:#0f5c5a;--on:#fff;--warn:#b3261e}
+@media (prefers-color-scheme:dark){:root{--bg:#121a1b;--card:#1a2426;--ink:#e8eeee;--mute:#93a3a6;--line:#2b3a3c;--brand:#4fb3ad;--on:#0b1f1e;--warn:#ff8a80}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 'Hind Siliguri',system-ui,sans-serif}
+main{max-width:480px;margin:0 auto;padding:16px 16px 70px}
+h1{font-size:26px;margin:6px 0 2px}h2{font-size:20px;margin:0 0 10px}
+.sub{color:var(--mute);margin:0 0 14px}
+.card,.box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:12px}
+.box{display:flex;align-items:center;gap:8px;padding:14px 16px;cursor:pointer;border-left:5px solid var(--brand)}
+.box.sm{padding:10px 12px;border-left-width:3px;margin-bottom:8px}
+.box b{flex:1;font-weight:600;word-break:break-word}
+.indent{margin-left:14px}
+label{display:block;font-weight:600;margin:10px 0 4px}
+input,textarea,select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+textarea{resize:vertical}textarea:focus,select:focus{outline:2px solid var(--brand);outline-offset:1px}
+.stim{background:var(--bg);border-left:3px solid var(--line);padding:8px 10px;margin-bottom:8px;white-space:pre-wrap}
+.qt{white-space:pre-wrap;font-weight:600}
+.opt{padding:3px 0 3px 4px;white-space:pre-wrap}.opt.right{color:var(--brand);font-weight:600}
+.qimg{max-width:100%;border-radius:8px;margin:8px 0;display:block}
+.tools{display:flex;gap:6px;justify-content:flex-end;margin-top:10px}
+.pal{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
+.pal button{width:36px;height:36px;padding:0;margin:0;background:var(--bg);color:var(--ink);border:1px solid var(--line)}
+pre.cred{white-space:pre-wrap;font:inherit}
+input:focus,button:focus-visible{outline:2px solid var(--brand);outline-offset:1px}
+button{font:inherit;font-weight:600;border:0;border-radius:8px;padding:10px 14px;background:var(--brand);color:var(--on);cursor:pointer;width:100%;margin-top:12px}
+button.ghost{background:transparent;color:var(--brand);border:1px solid var(--line)}
+button.ic{width:34px;height:34px;padding:0;margin:0;flex:none;background:transparent;color:var(--mute);border:1px solid var(--line)}
+button.ic:disabled{opacity:.3}
+.nav{display:flex;gap:8px;margin:0 0 14px}
+.nav button{margin:0;background:transparent;color:var(--mute);border:1px solid var(--line)}
+.nav button.on{background:var(--brand);color:var(--on);border-color:var(--brand)}
+.msg{margin-top:10px;color:var(--warn);min-height:1.4em}.ok{color:var(--brand)}
+.cred{background:var(--bg);border:1px dashed var(--brand);border-radius:8px;padding:12px;margin-top:12px;word-break:break-all}
+.avatar{width:90px;height:90px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 8px;background:var(--line)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
+.row button{width:auto;margin:0;padding:6px 10px}
+.empty{color:var(--mute);padding:6px 0}
+.pick{display:flex;gap:10px;cursor:pointer;align-items:flex-start;padding:12px 14px;margin-bottom:8px}
+.pick input{width:22px;height:22px;margin:3px 0 0;flex:none}
+.pick small{color:var(--mute)}
+.bar{position:fixed;left:0;right:0;bottom:0;padding:10px 16px;background:var(--card);border-top:1px solid var(--line)}
+.bar button{max-width:448px;display:block;margin:0 auto}
+.chk{display:flex;gap:8px;align-items:center}.chk input{width:auto;margin:0}
+/* A4 print sheets */
+#print{position:absolute;left:-10000px;top:0;width:210mm}
+.sheet{width:210mm;height:297mm;padding:10mm;box-sizing:border-box;overflow:hidden;background:#fff;color:#000;font-family:'Hind Siliguri',system-ui,sans-serif;page-break-after:always;break-after:page}
+.sheet:last-child{page-break-after:auto;break-after:auto}
+.ph{display:flex;align-items:center;gap:10px;border-bottom:1.5px solid #000;padding-bottom:3mm;margin-bottom:3mm}
+.pl{width:18mm;flex:none}.pl img{max-width:18mm;max-height:18mm;display:block}
+.pc{flex:1;text-align:center}.p1{font-size:15pt;font-weight:700;line-height:1.2}.p2{font-size:10pt}
+.pr{font-size:9pt;text-align:right;min-width:24mm}
+.pb{column-count:2;column-gap:8mm;column-rule:1px solid #bbb;line-height:1.25}
+.pq{break-inside:avoid;margin-bottom:1.6mm}
+.pst{font-style:italic;border-left:2px solid #555;padding-left:4px;margin-bottom:1mm;white-space:pre-wrap}
+.pt{white-space:pre-wrap}
+.pq img{max-width:100%;max-height:28mm;display:block;margin:1mm 0}
+.po span{display:inline-block;margin-right:3mm;white-space:pre-wrap}
+.pb.ans{column-count:5;font-size:11pt}
+@media print{@page{size:A4;margin:0}html,body{background:#fff}main,.bar{display:none!important}#print{position:static;width:auto}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+.hide{display:none}
+</style>
+</head>
+<body>
+<main>
+<h1>Questionnaire</h1>
+<p class="sub" id="sub">Build question papers and download them as PDF.</p>
+<button class="ghost hide" id="bInstall" style="margin:0 0 12px">Install app on this device</button>
+<p class="sub hide" id="iosTip">To install on iPhone: tap Share, then Add to Home Screen.</p>
+
+<section id="auth">
+  <div class="nav"><button id="tLogin" class="on">Log in</button><button id="tReg">Create account</button></div>
+  <div class="card" id="loginBox">
+    <label>ID (mobile number)</label><input id="lId" autocapitalize="none" autocomplete="username">
+    <label>Password</label><input id="lPass" type="password" autocomplete="current-password">
+    <button id="bLogin">Log in</button>
+  </div>
+  <div class="card hide" id="regBox">
+    <label>Name</label><input id="rName">
+    <label>Mobile number</label><input id="rMobile" inputmode="numeric" placeholder="01XXXXXXXXX">
+    <label>Secret code</label><input id="rCode" autocapitalize="characters">
+    <button id="bReg">Get my ID and password</button>
+    <div id="cred"></div>
+  </div>
+  <div class="msg" id="authMsg"></div>
+</section>
+
+<section id="app" class="hide">
+  <div class="nav"><button id="nMk" class="on">Create</button><button id="nLib">Library</button><button id="nPro">Profile</button></div>
+  <div id="view"></div>
+</section>
+</main>
+<div class="bar hide" id="bar"><button id="bReview">Review paper</button></div>
+<div id="print"></div>
+
+<script>
+// Paste your Apps Script Web App URL here
+const API = 'https://script.google.com/macros/s/AKfycbxX17--tEHhOgkSq_Z0XyvnXhHFvUJ8SgNRkMj6se58ay2d1LCoig2shRfhvdgraZ7J/exec';
+
+const $ = id => document.getElementById(id);
+let token = localStorage.getItem('qtoken') || '', me = null, tree = null, openFolder = null, openTopic = null;
+const isAdmin = () => me && me.role === 'admin';
+
+async function call(action, data = {}) {
+  const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action, token, ...data }) });
+  const j = await res.json();
+  if (!j.ok) throw new Error(j.error);
+  return j.data;
+}
+async function run(btn, msgEl, fn) {
+  msgEl.textContent = ''; msgEl.className = 'msg'; btn.disabled = true;
+  try { await fn(); } catch (e) { msgEl.textContent = e.message; } finally { btn.disabled = false; }
+}
+const el = (html) => { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const act = fn => async () => { try { await fn(); } catch (e) { alert(e.message); } };
+
+/* ---------- Auth ---------- */
+function authTab(login) {
+  $('loginBox').classList.toggle('hide', !login); $('regBox').classList.toggle('hide', login);
+  $('tLogin').classList.toggle('on', login); $('tReg').classList.toggle('on', !login);
+}
+$('tLogin').onclick = () => authTab(true); $('tReg').onclick = () => authTab(false);
+$('bReg').onclick = () => run($('bReg'), $('authMsg'), async () => {
+  const r = await call('register', { name: $('rName').value, mobile: $('rMobile').value, code: $('rCode').value });
+  $('cred').innerHTML = `<div class="cred"><b>Your ID:</b> ${esc(r.id)}<br><b>Password:</b> ${esc(r.password)}<br><small>Write these down, then log in.</small></div>`;
+  $('lId').value = r.id; $('lPass').value = r.password;
+});
+$('bLogin').onclick = () => run($('bLogin'), $('authMsg'), async () => {
+  const r = await call('login', { mobile: $('lId').value.trim(), password: $('lPass').value });
+  token = r.token; localStorage.setItem('qtoken', token); start(r.profile);
+});
+function start(p) {
+  me = p; $('auth').classList.add('hide'); $('app').classList.remove('hide');
+  $('sub').textContent = 'Welcome, ' + p.name; go('mk');
+}
+
+/* ---------- Navigation ---------- */
+function go(tab) {
+  $('bar').classList.add('hide');
+  [['nMk', 'mk'], ['nLib', 'lib'], ['nPro', 'pro']].forEach(([id, t]) => $(id).classList.toggle('on', tab === t));
+  if (tab === 'mk') renderMake();
+  else if (tab === 'lib') { openFolder = null; openTopic = null; loadLib(); }
+  else renderProfile();
+}
+$('nMk').onclick = () => go('mk'); $('nLib').onclick = () => go('lib'); $('nPro').onclick = () => go('pro');
+
+/* ---------- Library ---------- */
+async function loadLib() { tree = await call('tree'); renderLib(); }
+const byId = (a, id) => a.find(x => x.id === id);
+
+// Moves an item up/down among its siblings, then saves the new order
+async function move(type, id, dir, sibs) {
+  const ids = sibs.map(s => s.id), i = ids.indexOf(id), j = i + dir;
+  if (j < 0 || j >= ids.length) return;
+  [ids[i], ids[j]] = [ids[j], ids[i]];
+  await call('reorder', { type, ids }); await loadLib();
+}
+function item(type, o, sibs, opts = {}) {
+  const def = type === 'folder' && o.isDefault === true || o.isDefault === 'TRUE';
+  const i = sibs.findIndex(s => s.id === o.id);
+  const d = el(`<div class="box ${opts.sm ? 'sm' : ''}"><b>${esc(o.name)}</b></div>`);
+  if (opts.onOpen) d.onclick = opts.onOpen;
+  if (isAdmin()) {
+    const btn = (t, label, fn, dis) => {
+      const b = el(`<button class="ic" aria-label="${label}" ${dis ? 'disabled' : ''}>${t}</button>`);
+      b.onclick = e => { e.stopPropagation(); act(fn)(); }; d.appendChild(b);
+    };
+    btn('▲', 'Move up', () => move(type, o.id, -1, sibs), i === 0);
+    btn('▼', 'Move down', () => move(type, o.id, 1, sibs), i === sibs.length - 1);
+    if (!def) {
+      btn('✎', 'Rename', async () => {
+        const n = prompt('New name', o.name); if (n === null) return;
+        await call('rename', { type, id: o.id, name: n }); await loadLib();
+      });
+      btn('✕', 'Delete', async () => {
+        if (!confirm(`Delete "${o.name}" and everything inside it?`)) return;
+        await call('remove', { type, id: o.id }); await loadLib();
+      });
+    }
+  }
+  return d;
+}
+function addBtn(label, type, extra) {
+  const b = el(`<button class="ghost">+ ${label}</button>`);
+  b.onclick = act(async () => {
+    const n = prompt(label); if (!n) return;
+    await call('add', { type, name: n, ...extra }); await loadLib();
+  });
+  return b;
+}
+function topicItem(t, sibs) {
+  return item('topic', t, sibs, { sm: true, onOpen: () => { openTopic = t; renderLib(); } });
+}
+function renderLib() {
+  if (openTopic) return renderTopic();
+  const v = $('view'); v.innerHTML = '';
+  if (!openFolder) {
+    v.appendChild(el('<h2>Folders</h2>'));
+    tree.folders.forEach(f => v.appendChild(item('folder', f, tree.folders, { onOpen: () => { openFolder = f.id; renderLib(); } })));
+    if (isAdmin()) v.appendChild(addBtn('Add folder', 'folder', {}));
+    return;
+  }
+  const f = byId(tree.folders, openFolder), def = f.isDefault === true || f.isDefault === 'TRUE';
+  const back = el('<button class="ghost" style="margin:0 0 12px">← All folders</button>');
+  back.onclick = () => { openFolder = null; renderLib(); };
+  v.appendChild(back); v.appendChild(el(`<h2>${esc(f.name)}</h2>`));
+  const chs = tree.chapters.filter(c => c.folderId === f.id);
+  const topicsOf = cid => tree.topics.filter(t => t.folderId === f.id && String(t.chapterId || '') === cid);
+  if (!def) {
+    chs.forEach(c => {
+      v.appendChild(item('chapter', c, chs));
+      const ts = topicsOf(c.id), wrap = el('<div class="indent"></div>');
+      ts.forEach(t => wrap.appendChild(topicItem(t, ts)));
+      if (!ts.length) wrap.appendChild(el('<div class="empty">No topics yet</div>'));
+      if (isAdmin()) wrap.appendChild(addBtn('Add topic', 'topic', { folderId: f.id, chapterId: c.id }));
+      v.appendChild(wrap);
+    });
+    if (isAdmin()) v.appendChild(addBtn('Add chapter', 'chapter', { folderId: f.id }));
+    v.appendChild(el('<h2 style="margin-top:18px">Topics without a chapter</h2>'));
+  }
+  const ts = topicsOf('');
+  ts.forEach(t => v.appendChild(topicItem(t, ts)));
+  if (!ts.length) v.appendChild(el('<div class="empty">No topics yet</div>'));
+  if (isAdmin()) v.appendChild(addBtn('Add topic', 'topic', { folderId: f.id, chapterId: '' }));
+}
+
+/* ---------- Create paper (home) ---------- */
+let paper = [], found = [];
+const HK = 'qhdr';
+const savedHdr = () => { try { return JSON.parse(localStorage.getItem(HK)) || {}; } catch (e) { return {}; } };
+const clip = (s, n) => esc(s.length > n ? s.slice(0, n) + '…' : s);
+
+function updateBar() {
+  $('bar').classList.toggle('hide', !paper.length);
+  $('bReview').textContent = `Review paper (${paper.length})`;
+}
+$('bReview').onclick = () => renderPaper();
+
+async function renderMake() {
+  const v = $('view'); v.innerHTML = '<div class="empty">Loading…</div>';
+  try { tree = await call('tree'); } catch (e) { v.innerHTML = ''; return alert(e.message); }
+  v.innerHTML = `<div class="card"><h2>Find questions</h2>
+    <label>Subject</label><select id="sF"></select>
+    <label>Chapter</label><select id="sC"></select>
+    <label>Topic</label><select id="sT"></select>
+    <button id="bFind">Show questions</button><div class="msg" id="mMsg"></div></div><div id="found"></div>`;
+  const fill = (id, arr, all) => $(id).innerHTML = (all ? `<option value="">${all}</option>` : '') +
+    arr.map(x => `<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('');
+  const fillT = () => {
+    const f = $('sF').value, c = $('sC').value;
+    fill('sT', tree.topics.filter(t => t.folderId === f && (!c || t.chapterId === c)), 'All topics');
+  };
+  const fillC = () => {
+    const chs = tree.chapters.filter(c => c.folderId === $('sF').value);
+    fill('sC', chs, 'All chapters'); $('sC').disabled = !chs.length; fillT();
+  };
+  fill('sF', tree.folders); fillC();
+  $('sF').onchange = fillC; $('sC').onchange = fillT;
+  $('bFind').onclick = () => run($('bFind'), $('mMsg'), async () => {
+    found = await call('qSearch', { folderId: $('sF').value, chapterId: $('sC').value, topicId: $('sT').value });
+    renderFound();
+  });
+  updateBar();
+}
+function setPick(q, on) {
+  const i = paper.findIndex(p => p.id === q.id);
+  if (on && i < 0) { if (paper.length >= 100) return false; paper.push(JSON.parse(JSON.stringify(q))); }
+  if (!on && i >= 0) paper.splice(i, 1);
+  updateBar(); return true;
+}
+function renderFound() {
+  const box = $('found');
+  if (!found.length) { box.innerHTML = '<div class="empty">No questions found for this selection.</div>'; return; }
+  box.innerHTML = `<div class="card"><b>${found.length} questions found</b>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="ghost" id="bAll" style="margin:0">Select all</button><button class="ghost" id="bNone" style="margin:0">Clear</button></div>
+    <label>Pick random questions</label><input id="rN" type="number" min="1" max="100" placeholder="How many? (1-100)">
+    <button class="ghost" id="bRand">Pick random</button></div><div id="fl"></div>`;
+  found.forEach(q => {
+    const c = el(`<label class="card pick"><input type="checkbox" ${paper.some(p => p.id === q.id) ? 'checked' : ''}>
+      <span>${clip(q.text, 160)}<br><small>${esc(q.topicName)}${q.image ? ', has image' : ''}</small></span></label>`);
+    const cb = c.querySelector('input');
+    cb.onchange = () => { if (!setPick(q, cb.checked)) { cb.checked = false; alert('A paper can have up to 100 questions.'); } };
+    $('fl').appendChild(c);
+  });
+  $('bAll').onclick = () => { found.forEach(q => setPick(q, true)); if (paper.length >= 100) alert('Limit of 100 questions reached.'); renderFound(); };
+  $('bNone').onclick = () => { found.forEach(q => setPick(q, false)); renderFound(); };
+  $('bRand').onclick = () => {
+    const n = Math.min(+$('rN').value || 0, 100);
+    if (n < 1) return alert('Enter how many questions you want.');
+    found.filter(q => !paper.some(p => p.id === q.id)).sort(() => Math.random() - .5).slice(0, n).forEach(q => setPick(q, true));
+    renderFound();
+  };
+}
+
+function swapQ(i, d) { [paper[i], paper[i + d]] = [paper[i + d], paper[i]]; renderPaper(); }
+function renderPaper() {
+  $('bar').classList.add('hide');
+  const s = savedHdr(), logo = localStorage.getItem('qlogo') || '';
+  $('view').innerHTML = `<button class="ghost" id="bBack" style="margin:0 0 12px">← Add more questions</button>
+    <h2>Your paper (${paper.length}/100)</h2><div id="plist"></div>
+    <div class="card"><h2>Paper heading</h2>
+      <label>Title</label><input id="hT" value="${esc(s.t || '')}" placeholder="e.g. Model Test 1">
+      <label>Sub-title</label><input id="hS" value="${esc(s.s || '')}" placeholder="e.g. School name, class">
+      <label>Time</label><input id="hTm" value="${esc(s.tm || '')}" placeholder="e.g. 30 minutes">
+      <label>Full marks</label><input id="hM" value="${esc(s.m || '')}" placeholder="e.g. 50">
+      <label>Logo</label><img id="hLogo" class="avatar ${logo ? '' : 'hide'}" src="${esc(logo)}" alt="Logo">
+      <input id="hFile" type="file" accept="image/*" class="hide">
+      <button class="ghost" id="bLogo">${logo ? 'Change logo' : 'Choose logo'}</button>
+      <button class="ghost ${logo ? '' : 'hide'}" id="bLogoX">Remove logo</button>
+      <label class="chk" style="margin-top:14px"><input type="checkbox" id="hAns"> Include answer sheet</label>
+      <button id="bPdf">Download PDF</button>
+      <p class="sub" style="margin-top:8px">The print window opens. Choose "Save as PDF" and keep paper size A4.</p></div>`;
+  $('bBack').onclick = () => go('mk');
+  if (!paper.length) $('plist').innerHTML = '<div class="empty">No questions yet. Go back and pick some.</div>';
+  paper.forEach((q, i) => {
+    const c = el(`<div class="card"><div class="qt">${i + 1}. ${clip(q.text, 140)}</div><small>Answer: ${OPTL[q.answer]}</small></div>`);
+    const t = el('<div class="tools"></div>');
+    [['▲', 'Move up', () => swapQ(i, -1), i === 0], ['▼', 'Move down', () => swapQ(i, 1), i === paper.length - 1],
+     ['✎', 'Edit', () => editLocal(i), false], ['✕', 'Remove', () => { paper.splice(i, 1); renderPaper(); }, false]]
+      .forEach(([ic, l, f, d]) => { const b = el(`<button class="ic" aria-label="${l}" ${d ? 'disabled' : ''}>${ic}</button>`); b.onclick = f; t.appendChild(b); });
+    c.appendChild(t); $('plist').appendChild(c);
+  });
+  $('bLogo').onclick = () => $('hFile').click();
+  $('bLogoX').onclick = () => { localStorage.removeItem('qlogo'); renderPaper(); };
+  $('hFile').onchange = e => {
+    const f = e.target.files[0]; if (!f) return;
+    const im = new Image();
+    im.onload = () => {
+      const sc = Math.min(1, 200 / Math.max(im.width, im.height)), c = document.createElement('canvas');
+      c.width = Math.round(im.width * sc); c.height = Math.round(im.height * sc);
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      try { localStorage.setItem('qlogo', c.toDataURL('image/png')); } catch (x) { alert('Logo is too large.'); }
+      keepHdr(); renderPaper();
+    };
+    im.src = URL.createObjectURL(f);
+  };
+  $('bPdf').onclick = act(async () => {
+    if (!paper.length) throw new Error('Add some questions first');
+    keepHdr(); await buildPrint(savedHdr(), $('hAns').checked);
+    setTimeout(() => window.print(), 300);
+  });
+}
+function keepHdr() {
+  if (!$('hT')) return;
+  localStorage.setItem(HK, JSON.stringify({ t: $('hT').value.trim(), s: $('hS').value.trim(), tm: $('hTm').value.trim(), m: $('hM').value.trim() }));
+}
+window.onafterprint = () => { $('print').innerHTML = ''; };
+
+// Edits only this paper's copy, never the shared question
+function editLocal(i) {
+  keepHdr();
+  const q = paper[i], o = q.options.concat(['', '', '', '']).slice(0, 4);
+  $('view').innerHTML = `<h2>Edit question ${i + 1}</h2><div class="card">
+    <p class="sub">Changes apply to this paper only.</p>
+    <label>Stimulus</label><textarea id="eSt" rows="3">${esc(q.stimulus)}</textarea>
+    <label>Question</label><textarea id="eTx" rows="3">${esc(q.text)}</textarea>
+    <label>Options</label>${o.map((x, k) => `<input id="eO${k}" placeholder="Option ${OPTL[k]}" value="${esc(x)}" style="margin-bottom:6px">`).join('')}
+    <label>Correct answer</label><select id="eAn">${[0, 1, 2, 3].map(k => `<option value="${k}" ${q.answer === k ? 'selected' : ''}>${OPTL[k]}</option>`).join('')}</select>
+    <button id="bESave">Done</button><button class="ghost" id="bECancel">Cancel</button><div class="msg" id="eMsg"></div></div>`;
+  $('bECancel').onclick = renderPaper;
+  $('bESave').onclick = () => run($('bESave'), $('eMsg'), async () => {
+    const raw = [0, 1, 2, 3].map(k => $('eO' + k).value.trim()); let a = +$('eAn').value;
+    if (!$('eTx').value.trim()) throw new Error('Question text is required');
+    if (!raw[a]) throw new Error('The correct answer option is empty');
+    const options = raw.filter(Boolean);
+    if (options.length < 2) throw new Error('Add at least 2 options');
+    Object.assign(q, { stimulus: $('eSt').value.trim(), text: $('eTx').value.trim(), options, answer: raw.slice(0, a).filter(Boolean).length });
+    renderPaper();
+  });
+}
+
+// Builds A4 sheets: up to 60 questions on 1 page, more on 2 pages. Text shrinks until it fits.
+async function buildPrint(h, withAns) {
+  const P = $('print'), logo = localStorage.getItem('qlogo') || '', n = paper.length;
+  const pages = n > 60 ? 2 : 1, per = Math.ceil(n / pages);
+  P.innerHTML = '<div id="probe" style="height:100mm;width:1px;position:absolute"></div>';
+  const mm = $('probe').offsetHeight / 100;
+  const head = title => `<div class="ph"><div class="pl">${logo ? `<img src="${esc(logo)}" alt="">` : ''}</div>
+    <div class="pc"><div class="p1">${esc(title)}</div><div class="p2">${esc(h.s || '')}</div></div>
+    <div class="pr">${h.tm ? 'Time: ' + esc(h.tm) + '<br>' : ''}${h.m ? 'Marks: ' + esc(h.m) : ''}</div></div>`;
+  const sheets = [];
+  const add = (title, body, cls) => {
+    const sh = el(`<div class="sheet">${head(title)}<div class="pb ${cls || ''}">${body}</div></div>`);
+    P.appendChild(sh); sheets.push(sh);
+  };
+  for (let p = 0; p < pages; p++) {
+    const body = paper.slice(p * per, (p + 1) * per).map((q, k) => `<div class="pq">
+      ${q.stimulus ? `<div class="pst">${esc(q.stimulus)}</div>` : ''}
+      <div class="pt"><b>${p * per + k + 1}.</b> ${esc(q.text)}</div>${q.image ? `<img src="${esc(q.image)}" alt="">` : ''}
+      <div class="po">${q.options.map((o, j) => `<span>${OPTL[j]}) ${esc(o)}</span>`).join('')}</div></div>`).join('');
+    add(h.t || 'Question Paper', body);
+  }
+  if (withAns) add((h.t || 'Question Paper') + ' – Answer Sheet', paper.map((q, i) => `<div class="pq">${i + 1}. ${OPTL[q.answer]}</div>`).join(''), 'ans');
+  if (document.fonts) await document.fonts.ready;
+  sheets.forEach(sh => {
+    const pb = sh.querySelector('.pb');
+    if (pb.classList.contains('ans')) return;
+    const avail = sh.clientHeight - 20 * mm - sh.querySelector('.ph').offsetHeight - 3 * mm;
+    let fs = 11; pb.style.fontSize = fs + 'pt';
+    while (fs > 5 && pb.offsetHeight > avail) { fs -= 0.25; pb.style.fontSize = fs + 'pt'; }
+  });
+}
+
+/* ---------- Questions ---------- */
+const canWrite = () => isAdmin() || me.canAdd;
+const canEditQ = q => isAdmin() || (me.canAdd && q.createdBy === me.mobile);
+const OPTL = 'ABCD';
+const SYMS = ['√','π','²','³','½','¼','°','∠','△','⊥','∥','≤','≥','≠','≈','×','÷','±','∞','∴','∵','∈','∪','∩','⊂','α','β','θ','Δ','Σ','→','⁻¹'];
+const LET = { a: 0, b: 1, c: 2, d: 3, 'ক': 0, 'খ': 1, 'গ': 2, 'ঘ': 3 };
+let qs = [];
+
+async function renderTopic() {
+  const v = $('view'); v.innerHTML = '<div class="empty">Loading…</div>';
+  try { qs = await call('qList', { topicId: openTopic.id }); }
+  catch (e) { alert(e.message); openTopic = null; return renderLib(); }
+  v.innerHTML = '';
+  const back = el('<button class="ghost" style="margin:0 0 12px">← Back</button>');
+  back.onclick = () => { openTopic = null; renderLib(); };
+  v.appendChild(back);
+  v.appendChild(el(`<h2>${esc(openTopic.name)}</h2>`));
+  v.appendChild(el(`<p class="sub">${qs.length} question${qs.length === 1 ? '' : 's'}</p>`));
+  qs.forEach((q, i) => {
+    const c = el(`<div class="card">${q.stimulus ? `<div class="stim">${esc(q.stimulus)}</div>` : ''}
+      <div class="qt">${i + 1}. ${esc(q.text)}</div>${q.image ? `<img class="qimg" src="${esc(q.image)}" alt="">` : ''}
+      ${q.options.map((o, k) => `<div class="opt ${k === q.answer ? 'right' : ''}">${OPTL[k]}) ${esc(o)}${k === q.answer ? ' ✓' : ''}</div>`).join('')}
+      ${q.explanation ? `<div class="empty">${esc(q.explanation)}</div>` : ''}</div>`);
+    if (canEditQ(q) || isAdmin()) {
+      const t = el('<div class="tools"></div>');
+      const mk = (s, label, fn, dis) => {
+        const b = el(`<button class="ic" aria-label="${label}" ${dis ? 'disabled' : ''}>${s}</button>`);
+        b.onclick = act(fn); t.appendChild(b);
+      };
+      if (isAdmin()) {
+        mk('▲', 'Move up', () => moveQ(i, -1), i === 0);
+        mk('▼', 'Move down', () => moveQ(i, 1), i === qs.length - 1);
+      }
+      if (canEditQ(q)) {
+        mk('✎', 'Edit', async () => renderForm(q));
+        mk('✕', 'Delete', async () => {
+          if (!confirm('Delete this question?')) return;
+          await call('qRemove', { id: q.id }); renderTopic();
+        });
+      }
+      c.appendChild(t);
+    }
+    v.appendChild(c);
+  });
+  if (!qs.length) v.appendChild(el('<div class="empty">No questions yet</div>'));
+  if (canWrite()) {
+    const a = el('<button>+ Add question</button>'); a.onclick = () => renderForm(null);
+    const b = el('<button class="ghost">+ Paste many questions</button>'); b.onclick = renderBulk;
+    v.appendChild(a); v.appendChild(b);
+  }
+}
+async function moveQ(i, d) {
+  const ids = qs.map(q => q.id), j = i + d;
+  [ids[i], ids[j]] = [ids[j], ids[i]];
+  await call('qReorder', { ids }); renderTopic();
+}
+
+function renderForm(q) {
+  let img = q ? q.image : '', last = null;
+  const o = q ? q.options : ['', '', '', ''];
+  $('view').innerHTML = `<h2>${q ? 'Edit question' : 'Add question'}</h2><div class="card">
+    <label>Stimulus (optional)</label><textarea id="fSt" rows="3">${esc(q ? q.stimulus : '')}</textarea>
+    <label>Question</label><textarea id="fTx" rows="3">${esc(q ? q.text : '')}</textarea>
+    <label>Image (optional)</label><img id="fImg" class="qimg ${img ? '' : 'hide'}" src="${esc(img)}" alt="">
+    <input id="fFile" type="file" accept="image/*" class="hide">
+    <button class="ghost" id="bImg">${img ? 'Change image' : 'Add image'}</button>
+    <button class="ghost ${img ? '' : 'hide'}" id="bImgX">Remove image</button>
+    <label>Options</label>
+    ${[0, 1, 2, 3].map(k => `<input id="fO${k}" placeholder="Option ${OPTL[k]}" value="${esc(o[k] || '')}" style="margin-bottom:6px">`).join('')}
+    <label>Correct answer</label>
+    <select id="fAn">${[0, 1, 2, 3].map(k => `<option value="${k}" ${q && q.answer === k ? 'selected' : ''}>${OPTL[k]}</option>`).join('')}</select>
+    <label>Explanation (optional)</label><textarea id="fEx" rows="2">${esc(q ? q.explanation : '')}</textarea>
+    <label>Math symbols (tap to insert)</label><div class="pal" id="pal"></div>
+    <button id="bQSave">Save question</button><button class="ghost" id="bQCancel">Cancel</button>
+    <div class="msg" id="fMsg"></div></div>`;
+  ['fSt', 'fTx', 'fO0', 'fO1', 'fO2', 'fO3', 'fEx'].forEach(id => $(id).onfocus = () => last = $(id));
+  SYMS.forEach(s => {
+    const b = el(`<button type="button">${s}</button>`);
+    b.onmousedown = e => e.preventDefault();
+    b.onclick = () => {
+      const f = last || $('fTx'), a = f.selectionStart ?? f.value.length, z = f.selectionEnd ?? a;
+      f.value = f.value.slice(0, a) + s + f.value.slice(z); f.focus(); f.selectionStart = f.selectionEnd = a + s.length;
+    };
+    $('pal').appendChild(b);
+  });
+  const showImg = () => {
+    $('fImg').src = img; $('fImg').classList.toggle('hide', !img);
+    $('bImgX').classList.toggle('hide', !img); $('bImg').textContent = img ? 'Change image' : 'Add image';
+  };
+  $('bImg').onclick = () => $('fFile').click();
+  $('bImgX').onclick = () => { img = ''; showImg(); };
+  $('fFile').onchange = e => {
+    const f = e.target.files[0]; if (!f) return;
+    const im = new Image();
+    im.onload = () => {
+      for (const w of [520, 420, 320, 240]) {  // shrink until it fits in a sheet cell
+        const s = Math.min(1, w / Math.max(im.width, im.height)), c = document.createElement('canvas');
+        c.width = Math.round(im.width * s); c.height = Math.round(im.height * s);
+        const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0, c.width, c.height);
+        img = c.toDataURL('image/jpeg', 0.6); if (img.length < 44000) break;
+      }
+      showImg();
+    };
+    im.src = URL.createObjectURL(f);
+  };
+  $('bQCancel').onclick = renderTopic;
+  $('bQSave').onclick = () => run($('bQSave'), $('fMsg'), async () => {
+    const raw = [0, 1, 2, 3].map(k => $('fO' + k).value.trim()); let ans = +$('fAn').value;
+    if (!raw[ans]) throw new Error('The correct answer option is empty');
+    const options = raw.filter(Boolean); ans = raw.slice(0, ans).filter(Boolean).length;
+    const item = { stimulus: $('fSt').value, text: $('fTx').value, options, answer: ans, explanation: $('fEx').value, image: img };
+    if (q) await call('qUpdate', { id: q.id, q: item }); else await call('qAdd', { topicId: openTopic.id, items: [item] });
+    renderTopic();
+  });
+}
+
+function renderBulk() {
+  $('view').innerHTML = `<h2>Paste many questions</h2><div class="card">
+    <p class="sub">Separate questions with a blank line. Example:</p>
+    <pre class="cred">1. Capital of Bangladesh?
+a) Chattogram
+b) Dhaka
+c) Khulna
+d) Sylhet
+Answer: b</pre>
+    <p class="sub">Optional lines: <b>Stimulus:</b> … and <b>Explanation:</b> … Labels a–d (or ক–ঘ) and "Ans:" (or "উত্তর:") also work.</p>
+    <textarea id="bTx" rows="12"></textarea>
+    <button id="bBSave">Save questions</button><button class="ghost" id="bBCancel">Cancel</button>
+    <div class="msg" id="bMsg"></div></div>`;
+  $('bBCancel').onclick = renderTopic;
+  $('bBSave').onclick = () => run($('bBSave'), $('bMsg'), async () => {
+    const { items, errs } = parseBulk($('bTx').value);
+    if (!items.length) throw new Error(errs[0] || 'No questions found');
+    if (errs.length && !confirm(`${errs.length} problem(s):\n${errs.slice(0, 5).join('\n')}\n\nSave the other ${items.length} questions anyway?`)) return;
+    await call('qAdd', { topicId: openTopic.id, items }); renderTopic();
+  });
+}
+function parseBulk(txt) {
+  const items = [], errs = [];
+  txt.replace(/\r/g, '').split(/\n\s*\n/).map(s => s.trim()).filter(Boolean).forEach((blk, bi) => {
+    const q = { stimulus: '', text: '', options: [], answer: -1, explanation: '', image: '' };
+    const ql = [], st = []; let cur = null, m;
+    blk.split('\n').forEach(raw => {
+      const line = raw.trim(); if (!line) return;
+      if ((m = line.match(/^(?:answer|ans|উত্তর)\s*[:.\-–]?\s*\(?([a-dA-Dকখগঘ])\)?\s*$/i))) { q.answer = LET[m[1].toLowerCase()]; cur = null; }
+      else if ((m = line.match(/^(?:explanation|exp|ব্যাখ্যা)\s*[:\-–]\s*(.*)/i))) { q.explanation = m[1]; cur = 'exp'; }
+      else if ((m = line.match(/^(?:stimulus|passage|উদ্দীপক)\s*[:\-–]\s*(.*)/i))) { st.push(m[1]); cur = 'st'; }
+      else if ((m = line.match(/^\(?([a-dA-Dকখগঘ])[).]\s+(.+)/))) { q.options.push(m[2]); cur = 'opt'; }
+      else if (cur === 'opt') q.options[q.options.length - 1] += ' ' + line;
+      else if (cur === 'exp') q.explanation += ' ' + line;
+      else if (cur === 'st') st.push(line);
+      else ql.push(line);
+    });
+    q.stimulus = st.join('\n');
+    q.text = ql.join(' ').replace(/^\s*[\d০-৯]+\s*[.)\-]\s*/, '');
+    const bad = !q.text ? 'question text is missing' : q.options.length < 2 ? 'needs at least 2 options'
+      : q.answer < 0 || q.answer >= q.options.length ? 'answer is missing or invalid' : '';
+    if (bad) errs.push(`Question ${bi + 1}: ${bad}`); else items.push(q);
+  });
+  return { items, errs };
+}
+
+/* ---------- Profile ---------- */
+function renderProfile() {
+  const ph = me.photo || 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="90" height="90"><rect width="90" height="90" fill="#cfd8d6"/><circle cx="45" cy="36" r="15" fill="#fff"/><rect x="19" y="55" width="52" height="28" rx="14" fill="#fff"/></svg>');
+  $('view').innerHTML = `
+  <div class="card"><img id="pic" class="avatar" src="${ph}" alt="Profile photo">
+    <input id="file" type="file" accept="image/*" class="hide">
+    <button class="ghost" id="bPic">Change photo</button>
+    <label>Name</label><input id="pName" value="${esc(me.name)}">
+    <label>ID</label><input value="${esc(me.mobile)}" disabled>
+    <button id="bSave">Save</button><div class="msg" id="pMsg"></div></div>
+  <div class="card"><h2>Change password</h2>
+    <label>Current password</label><input id="oldP" type="password" autocomplete="current-password">
+    <label>New password</label><input id="newP" type="password" autocomplete="new-password">
+    <button id="bPass">Change password</button><div class="msg" id="passMsg"></div></div>
+  ${isAdmin() ? `<div class="card"><h2>Admin: secret codes</h2>
+    <label>How many codes?</label><input id="cCount" type="number" min="1" max="100" value="5">
+    <button id="bCodes">Generate codes</button><div id="codeList"></div><div class="msg" id="cMsg"></div></div>
+  <div class="card"><h2>Who can add questions</h2><div id="userList"></div></div>` : ''}
+  <button class="ghost" id="bOut">Log out</button>`;
+  $('bPic').onclick = () => $('file').click();
+  $('file').onchange = e => {
+    const f = e.target.files[0]; if (!f) return;
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas'), m = Math.min(img.width, img.height); c.width = c.height = 200;
+      c.getContext('2d').drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, 200, 200);
+      $('pic').src = c.toDataURL('image/jpeg', 0.7);
+      $('pMsg').textContent = 'Press Save to keep the new photo'; $('pMsg').className = 'msg ok';
+    };
+    img.src = URL.createObjectURL(f);
+  };
+  $('bSave').onclick = () => run($('bSave'), $('pMsg'), async () => {
+    const photo = $('pic').src.startsWith('data:image/jpeg') ? $('pic').src : undefined;
+    me = await call('updateProfile', { name: $('pName').value, photo });
+    $('sub').textContent = 'Welcome, ' + me.name; $('pMsg').textContent = 'Saved'; $('pMsg').className = 'msg ok';
+  });
+  $('bPass').onclick = () => run($('bPass'), $('passMsg'), async () => {
+    await call('changePassword', { oldPassword: $('oldP').value, newPassword: $('newP').value });
+    $('oldP').value = $('newP').value = ''; $('passMsg').textContent = 'Password changed'; $('passMsg').className = 'msg ok';
+  });
+  $('bOut').onclick = () => { localStorage.removeItem('qtoken'); location.reload(); };
+  if (isAdmin()) {
+    $('bCodes').onclick = () => run($('bCodes'), $('cMsg'), async () => {
+      const l = await call('addCodes', { count: +$('cCount').value });
+      $('codeList').innerHTML = '<div class="cred">' + l.join('<br>') + '</div>';
+    });
+    loadUsers();
+  }
+}
+async function loadUsers() {
+  const list = (await call('listUsers')).filter(u => u.role !== 'admin'), box = $('userList');
+  box.innerHTML = list.length ? '' : '<div class="empty">No users yet</div>';
+  list.forEach(u => {
+    const d = el(`<div class="row"><div>${esc(u.name)}<br><small>${esc(u.mobile)}</small></div></div>`);
+    const b = el(`<button class="ghost">${u.canAdd ? 'Remove access' : 'Allow'}</button>`);
+    b.onclick = act(async () => { await call('setPermission', { mobile: u.mobile, canAdd: !u.canAdd }); loadUsers(); });
+    d.appendChild(b); box.appendChild(d);
+  });
+}
+
+/* ---------- Install as app ---------- */
+let installEvt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; $('bInstall').classList.remove('hide'); });
+$('bInstall').onclick = async () => { if (!installEvt) return; installEvt.prompt(); await installEvt.userChoice; installEvt = null; $('bInstall').classList.add('hide'); };
+window.addEventListener('appinstalled', () => $('bInstall').classList.add('hide'));
+if (/iphone|ipad/i.test(navigator.userAgent) && !navigator.standalone) $('iosTip').classList.remove('hide');
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+
+if (token) call('me').then(start).catch(() => localStorage.removeItem('qtoken'));
+</script>
+</body>
+</html>
